@@ -41,7 +41,7 @@ defmodule Dialyxir.Dialyzer do
         info("Starting Dialyzer")
 
         args
-        |> inspect(label: "dialyzer args", pretty: true, limit: 8)
+        |> inspect(label: "dialyzer args", pretty: true, limit: 80)
         |> info
 
         {duration_us, result} = :timer.tc(&:dialyzer.run/1, [args])
@@ -50,7 +50,9 @@ defmodule Dialyxir.Dialyzer do
 
         filter_map_args = FilterMap.to_args(split)
 
-        case Formatter.format_and_filter(result, filterer, filter_map_args, formatter) do
+        r = Formatter.format_and_filter(result, filterer, filter_map_args, formatter)
+        IO.inspect(r, label: "formatted results")
+        case r do
           {:ok, formatted_warnings, :no_unused_filters} ->
             {:ok, {formatted_time_elapsed, formatted_warnings, ""}}
 

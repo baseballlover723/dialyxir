@@ -154,6 +154,9 @@ defmodule Mix.Tasks.Dialyzer do
 
   def run(args) do
     {opts, _, dargs} = OptionParser.parse(args, strict: @command_options)
+    IO.inspect(args, label: "args")
+    IO.inspect(opts, label: "opts")
+    IO.inspect(dargs, label: "dargs")
     original_shell = Mix.shell()
     if opts[:quiet], do: Mix.shell(Mix.Shell.Quiet)
     opts = Keyword.delete(opts, :quiet)

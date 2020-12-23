@@ -17,6 +17,7 @@ defmodule Dialyxir.Formatter do
 
   @spec format_and_filter([tuple], module, Keyword.t(), atom) :: tuple
   def format_and_filter(warnings, filterer, filter_map_args, formatter) do
+    IO.inspect([warnings: warnings, filterer: filterer, filter_map_args: filter_map_args, formatter: formatter], label: "Formatter format_and_filter")
     filter_map = filterer.filter_map(filter_map_args)
 
     {filtered_warnings, filter_map} = filter_warnings(warnings, filterer, filter_map)
@@ -46,10 +47,12 @@ defmodule Dialyxir.Formatter do
   end
 
   defp format_warning(warning, :raw) do
+    IO.puts(0)
     inspect(warning, limit: :infinity)
   end
 
   defp format_warning(warning, :dialyzer) do
+    IO.puts(1)
     # OTP 22 uses indented output, but that's incompatible with dialyzer.ignore-warnings format.
     # Can be disabled, but OTP 21 and older only accept an atom, so only disable on OTP 22+.
     opts =
@@ -63,7 +66,9 @@ defmodule Dialyxir.Formatter do
     |> String.replace_trailing("\n", "")
   end
 
+  # TODO check here
   defp format_warning({_tag, {file, line}, message}, :short) do
+    IO.puts(2)
     {warning_name, arguments} = message
     base_name = Path.relative_to_cwd(file)
 
@@ -74,6 +79,7 @@ defmodule Dialyxir.Formatter do
   end
 
   defp format_warning(dialyzer_warning = {_tag, {file, line}, message}, :dialyxir) do
+    IO.puts(3)
     {warning_name, arguments} = message
     base_name = Path.relative_to_cwd(file)
 
