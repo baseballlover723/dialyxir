@@ -280,6 +280,13 @@ defmodule Dialyxir.Project do
     apps
   end
 
+  def path_prefix do
+    # TODO
+    # something something, use lockfile, relative path, return apps/scanner
+    IO.inspect(dialyzer_config(), label: "dialyzer config")
+    dialyzer_config()[:prefix_path] || ""
+  end
+
   defp include_deps do
     method = dialyzer_config()[:plt_add_deps]
 

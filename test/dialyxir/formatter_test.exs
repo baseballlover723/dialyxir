@@ -10,127 +10,142 @@ defmodule Dialyxir.FormatterTest do
     Mix.Project.in_project(app, "test/fixtures/#{Atom.to_string(app)}", fn _ -> f.() end)
   end
 
-  describe "exs ignore" do
-    test "evaluates an ignore file and ignores warnings matching the pattern" do
+  describe "umbrella" do
+    @tag :my_tests
+    test "uses the file path relative to the umbrella root" do
       warning =
         {:warn_return_no_exit, {'a/file.ex', 17}, {:no_return, [:only_normal, :format_long, 1]}}
 
-      in_project(:ignore, fn ->
-        {:error, remaining, _unused_filters_present} =
-          Formatter.format_and_filter([warning], Project, [], :short)
-
-        assert remaining == []
-      end)
-    end
-
-    test "does not filter lines not matching the pattern" do
-      warning =
-        {:warn_return_no_exit, {'a/different_file.ex', 17},
-         {:no_return, [:only_normal, :format_long, 1]}}
-
-      in_project(:ignore, fn ->
+        in_project(:umbrella, fn ->
+        # in_project(:alt_local_path, fn ->
+            IO.inspect(Project.path_prefix(), label: "test path prefix")
         {:error, [remaining], _} = Formatter.format_and_filter([warning], Project, [], :short)
-        assert remaining =~ ~r/different_file.* no local return/
-      end)
-    end
-
-    test "can filter by regex" do
-      warning =
-        {:warn_return_no_exit, {'a/regex_file.ex', 17},
-         {:no_return, [:only_normal, :format_long, 1]}}
-
-      in_project(:ignore, fn ->
-        {:error, remaining, _unused_filters_present} =
-          Formatter.format_and_filter([warning], Project, [], :short)
-
-        assert remaining == []
-      end)
-    end
-
-    test "lists unnecessary skips as warnings if ignoreing exit status " do
-      warning =
-        {:warn_return_no_exit, {'a/regex_file.ex', 17},
-         {:no_return, [:only_normal, :format_long, 1]}}
-
-      filter_args = [{:ignore_exit_status, true}]
-
-      in_project(:ignore, fn ->
-        assert {:warn, [], {:unused_filters_present, warning}} =
-                 Formatter.format_and_filter([warning], Project, filter_args, :dialyxir)
-
-        assert warning =~ "Unused filters:"
-      end)
-    end
-
-    test "error on unnecessary skips without ignore_exit_status" do
-      warning =
-        {:warn_return_no_exit, {'a/regex_file.ex', 17},
-         {:no_return, [:only_normal, :format_long, 1]}}
-
-      filter_args = [{:ignore_exit_status, false}]
-
-      in_project(:ignore, fn ->
-        {:error, [], {:unused_filters_present, error}} =
-          Formatter.format_and_filter([warning], Project, filter_args, :dialyxir)
-
-        assert error =~ "Unused filters:"
-      end)
-    end
-
-    test "overwrite ':list_unused_filters_present'" do
-      warning =
-        {:warn_return_no_exit, {'a/regex_file.ex', 17},
-         {:no_return, [:only_normal, :format_long, 1]}}
-
-      filter_args = [{:list_unused_filters, false}]
-
-      in_project(:ignore, fn ->
-        assert {:warn, [], {:unused_filters_present, warning}} =
-                 Formatter.format_and_filter([warning], Project, filter_args, :dialyxir)
-
-        refute warning =~ "Unused filters:"
+        assert remaining =~ ~r/apps\/first_one\/a\/file.* no local return/
       end)
     end
   end
 
-  describe "simple string ignore" do
-    test "evaluates an ignore file and ignores warnings matching the pattern" do
-      warning =
-        {:warn_matching, {'a/file.ex', 17}, {:pattern_match, ['pattern \'ok\'', '\'error\'']}}
+  # describe "exs ignore" do
+  #   test "evaluates an ignore file and ignores warnings matching the pattern" do
+  #     warning =
+  #       {:warn_return_no_exit, {'a/file.ex', 17}, {:no_return, [:only_normal, :format_long, 1]}}
 
-      in_project(:ignore_string, fn ->
-        assert Formatter.format_and_filter([warning], Project, [], :dialyzer) ==
-                 {:ok, [], :no_unused_filters}
-      end)
-    end
-  end
+  #     in_project(:ignore, fn ->
+  #       {:error, remaining, _unused_filters_present} =
+  #         Formatter.format_and_filter([warning], Project, [], :short)
 
-  test "listing unused filter behaves the same for different formats" do
-    warnings = [
-      {:warn_return_no_exit, {'a/regex_file.ex', 17},
-       {:no_return, [:only_normal, :format_long, 1]}},
-      {:warn_return_no_exit, {'a/another-file.ex', 18}, {:unknown_type, {:M, :F, :A}}}
-    ]
+  #       assert remaining == []
+  #     end)
+  #   end
 
-    expected_warning = "a/another-file.ex:18"
+  #   test "does not filter lines not matching the pattern" do
+  #     warning =
+  #       {:warn_return_no_exit, {'a/different_file.ex', 17},
+  #        {:no_return, [:only_normal, :format_long, 1]}}
 
-    expected_unused_filter =
-      "Unused filters:\n{\"a/file.ex:17:no_return Function format_long/1 has no local return.\"}"
+  #     in_project(:ignore, fn ->
+  #       {:error, [remaining], _} = Formatter.format_and_filter([warning], Project, [], :short)
+  #       assert remaining =~ ~r/different_file.* no local return/
+  #     end)
+  #   end
 
-    filter_args = [{:list_unused_filters, true}]
+  #   test "can filter by regex" do
+  #     warning =
+  #       {:warn_return_no_exit, {'a/regex_file.ex', 17},
+  #        {:no_return, [:only_normal, :format_long, 1]}}
 
-    for format <- [:short, :dialyxir, :dialyzer] do
-      in_project(:ignore, fn ->
-        capture_io(fn ->
-          result = Formatter.format_and_filter(warnings, Project, filter_args, format)
+  #     in_project(:ignore, fn ->
+  #       {:error, remaining, _unused_filters_present} =
+  #         Formatter.format_and_filter([warning], Project, [], :short)
 
-          assert {:error, [warning], {:unused_filters_present, unused}} = result
-          assert warning =~ expected_warning
-          assert unused =~ expected_unused_filter
-          # A warning for regex_file.ex was explicitly put into format_and_filter.
-          refute unused =~ "regex_file.ex"
-        end)
-      end)
-    end
-  end
+  #       assert remaining == []
+  #     end)
+  #   end
+
+  #   test "lists unnecessary skips as warnings if ignoreing exit status " do
+  #     warning =
+  #       {:warn_return_no_exit, {'a/regex_file.ex', 17},
+  #        {:no_return, [:only_normal, :format_long, 1]}}
+
+  #     filter_args = [{:ignore_exit_status, true}]
+
+  #     in_project(:ignore, fn ->
+  #       assert {:warn, [], {:unused_filters_present, warning}} =
+  #                Formatter.format_and_filter([warning], Project, filter_args, :dialyxir)
+
+  #       assert warning =~ "Unused filters:"
+  #     end)
+  #   end
+
+  #   test "error on unnecessary skips without ignore_exit_status" do
+  #     warning =
+  #       {:warn_return_no_exit, {'a/regex_file.ex', 17},
+  #        {:no_return, [:only_normal, :format_long, 1]}}
+
+  #     filter_args = [{:ignore_exit_status, false}]
+
+  #     in_project(:ignore, fn ->
+  #       {:error, [], {:unused_filters_present, error}} =
+  #         Formatter.format_and_filter([warning], Project, filter_args, :dialyxir)
+
+  #       assert error =~ "Unused filters:"
+  #     end)
+  #   end
+
+  #   test "overwrite ':list_unused_filters_present'" do
+  #     warning =
+  #       {:warn_return_no_exit, {'a/regex_file.ex', 17},
+  #        {:no_return, [:only_normal, :format_long, 1]}}
+
+  #     filter_args = [{:list_unused_filters, false}]
+
+  #     in_project(:ignore, fn ->
+  #       assert {:warn, [], {:unused_filters_present, warning}} =
+  #                Formatter.format_and_filter([warning], Project, filter_args, :dialyxir)
+
+  #       refute warning =~ "Unused filters:"
+  #     end)
+  #   end
+  # end
+
+  # describe "simple string ignore" do
+  #   test "evaluates an ignore file and ignores warnings matching the pattern" do
+  #     warning =
+  #       {:warn_matching, {'a/file.ex', 17}, {:pattern_match, ['pattern \'ok\'', '\'error\'']}}
+
+  #     in_project(:ignore_string, fn ->
+  #       assert Formatter.format_and_filter([warning], Project, [], :dialyzer) ==
+  #                {:ok, [], :no_unused_filters}
+  #     end)
+  #   end
+  # end
+
+  # test "listing unused filter behaves the same for different formats" do
+  #   warnings = [
+  #     {:warn_return_no_exit, {'a/regex_file.ex', 17},
+  #      {:no_return, [:only_normal, :format_long, 1]}},
+  #     {:warn_return_no_exit, {'a/another-file.ex', 18}, {:unknown_type, {:M, :F, :A}}}
+  #   ]
+
+  #   expected_warning = "a/another-file.ex:18"
+
+  #   expected_unused_filter =
+  #     "Unused filters:\n{\"a/file.ex:17:no_return Function format_long/1 has no local return.\"}"
+
+  #   filter_args = [{:list_unused_filters, true}]
+
+  #   for format <- [:short, :dialyxir, :dialyzer] do
+  #     in_project(:ignore, fn ->
+  #       capture_io(fn ->
+  #         result = Formatter.format_and_filter(warnings, Project, filter_args, format)
+
+  #         assert {:error, [warning], {:unused_filters_present, unused}} = result
+  #         assert warning =~ expected_warning
+  #         assert unused =~ expected_unused_filter
+  #         # A warning for regex_file.ex was explicitly put into format_and_filter.
+  #         refute unused =~ "regex_file.ex"
+  #       end)
+  #     end)
+  #   end
+  # end
 end

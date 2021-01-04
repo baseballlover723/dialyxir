@@ -68,9 +68,21 @@ defmodule Dialyxir.Formatter do
 
   # TODO check here
   defp format_warning({_tag, {file, line}, message}, :short) do
-    IO.puts(2)
     {warning_name, arguments} = message
     base_name = Path.relative_to_cwd(file)
+    path_prefix = Dialyxir.Project.path_prefix()
+    umbrella_name = Path.join(path_prefix, base_name)
+    IO.inspect([file: file, base_name: base_name, path_prefix: path_prefix, umbrella_path: umbrella_name], label: "format warnings 2.1")
+
+
+
+    # root_path = Mix.Tasks.Dialyzer.root_path()
+    # umbrella_name = Path.relative_to(file, root_path)
+    # IO.inspect([file: file, base_name: base_name, root_path: root_path, umbrella_path: umbrella_name], label: "format warnings 2.1")
+
+    # child_root_path = Mix.Tasks.Dialyzer.child_app_path()
+    # joined_path = Path.join(child_root_path, file)
+    # IO.inspect([file: file, base_name: base_name, child_root_path: child_root_path, joined_path: joined_path], label: "format warnings 2.2")
 
     warning = warning(warning_name)
     string = warning.format_short(arguments)

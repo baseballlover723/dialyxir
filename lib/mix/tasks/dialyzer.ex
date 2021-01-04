@@ -295,6 +295,20 @@ defmodule Mix.Tasks.Dialyzer do
     |> String.to_atom()
   end
 
+  def root_path do
+    lockfile_path = Mix.Project.config()[:lockfile]
+    IO.inspect(lockfile_path, label: "lockfile_path")
+    working = Path.dirname(lockfile_path)
+    IO.inspect(working, label: "root")
+    working
+    abs = Path.absname(working)
+    IO.inspect(abs, label: "absolute path")
+    abs
+    expanded = Path.expand(working)
+    IO.inspect(expanded, label: "expanded path 1")
+    expanded
+  end
+
   defp in_child? do
     String.contains?(Mix.Project.config()[:lockfile], "..")
   end

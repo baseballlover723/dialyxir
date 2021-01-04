@@ -12,7 +12,8 @@ defmodule FirstOne.Mixfile do
       elixir: "~> 1.3",
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
-      deps: []
+      deps: [],
+      dialyzer: [prefix_path: "apps/first_one"]
     ]
   end
 
